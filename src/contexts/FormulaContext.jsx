@@ -1,14 +1,15 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 
-const FormulaContext = createContext();
 import { fetchFormulas  } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
 
+const FormulaContext = createContext();
 export const FormulaProvider = ({ children }) => {
     const [formulas, setFormulas] = useState([]);
     const { token } = useAuth();
     const loadFormulas = useCallback(async () => { 
         if (token) {
+            console.log("Loading formulas with token:", token);
             fetchFormulas(token).then(setFormulas).catch(console.error);
         }
     }, [token]);

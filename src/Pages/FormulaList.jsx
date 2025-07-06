@@ -1,22 +1,12 @@
-// crie uma pagina que lista todas as formulas disponiveis  
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useAuth } from "../hooks/useAuth";
-import { fetchFormulas } from "../services/api";
+import {useFormula}  from "../hooks/useFormulas";
+
 
 export const FormulaList = () => {
     const { token, login } = useAuth();
-    const [formulas, setFormulas] = useState([]);
-    
-    useEffect(() => {
-        if (token) {
-        fetchFormulas(token).then(setFormulas).catch(console.error);
-        }
-    }, [token]);
-    
- 
-    
- 
-
+    const { formulas } = useFormula();
+    console.log("Formulas:", formulas);
     if (!token) {
         const fakeLogin = () => {
         const t = prompt("Cole seu token JWT:");
