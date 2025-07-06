@@ -1,5 +1,5 @@
 import React, { useState }  from "react";
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useFormula } from "../hooks/useFormulas";
 import { useAuth } from "../hooks/useAuth";
 import { executeFormula } from "../services/api";
@@ -31,7 +31,7 @@ export default function FormulaCard() {
       const res = await executeFormula(formulaName, inputValues, token);
       setResult(res);
     } catch (err) {
-      setResult("Erro ao executar fórmula");
+      setResult("Erro ao executar fórmula" + err);
     }
   };
 
@@ -45,6 +45,9 @@ export default function FormulaCard() {
    
   return (
     <div className="bg-white shadow-md rounded-lg p-4">
+      <Link to={`/`} >
+        <h1> Back </h1>
+      </Link>  
       <div className="mb-2">
         <h2 className="font-bold text-xl">{formula.name}</h2>
         <p className="text-gray-600">{formula.equation}</p>
