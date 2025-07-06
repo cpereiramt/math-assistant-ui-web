@@ -44,32 +44,37 @@ export default function FormulaCard() {
   const variables = extractVariables(formula.equation);
    
   return (
-    <div className="bg-white shadow-md rounded-lg p-4">
+    <div className="min-h-screen bg-secondary p-4 md:p-8">
       <Link to={`/`} >
-        <h1> Back </h1>
+      <button className="text-sm text-primary mb-4 hover:underline">← Back</button>
       </Link>  
-      <div className="mb-2">
-        <h2 className="font-bold text-xl">{formula.name}</h2>
-        <p className="text-gray-600">{formula.equation}</p>
+      <div className="bg-white rounded-xl shadow p-6 space-y-6">
+      <h2 className="text-xl font-semibold text-primary">{formula.name}</h2>
       </div>
-      <div className="flex flex-wrap gap-2 mb-3">
+      <form onSubmit={(e) => e.preventDefault(e)} className="space-y-4">
+
+      
         {variables.map((v) => (
+          <div key={v} className="flex flex-col">
+          <label htmlFor={v} className="text-sm font-medium text-gray-700">{v}</label>
           <input
             key={v}
             type="number"
             placeholder={v}
             value={inputValues[v] || ""}
             onChange={(e) => handleChange(v, parseFloat(e.target.value))}
-            className="border px-2 py-1 rounded w-24"
-          />
-        ))}
-      </div>
+            required
+            className="mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
+            />
+            </div>
+      ))}
+          
       <div className="flex gap-2">
         <button
           onClick={() => handleExecute(formula.name)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded"
+          className="w-full bg-accent text-white py-3 rounded-lg hover:bg-green-600 transition"
         >
-          Executar
+          Execute
         </button>
         {/* <button
           onClick={() => handleDelete(formula.id)}
@@ -78,11 +83,12 @@ export default function FormulaCard() {
           Deletar
         </button> */}
         {result && (
-        <div className="mt-6 p-4 bg-green-100 border rounded">
-          Resultado: <strong>{result}</strong>
+        <div className="bg-secondary text-gray-700 rounded-lg p-4">
+          Result: <strong>{result}</strong>
         </div>
       )}
       </div>
+          </form>
     </div>
   );
 }
