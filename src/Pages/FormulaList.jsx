@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth } from "../hooks/useAuth";
 import {useFormula}  from "../hooks/useFormulas";
-
+import { Link } from 'react-router-dom';
 
 export const FormulaList = () => {
     const { token, login } = useAuth();
@@ -28,7 +28,9 @@ export const FormulaList = () => {
         <div className="min-h-screen bg-gray-100 p-6">
         <div className="grid gap-4">
                 {formulas.map((formula) => (
-                 <h1 key={formula.id}>{formula.name} </h1>
+                <Link to={`/formula/${formula.id}`} >
+                        <h1 key={formula.id}>{formula.name} </h1>
+                </Link>  
             ))}
             </div>
         </div>
