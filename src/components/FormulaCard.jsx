@@ -44,19 +44,19 @@ export default function FormulaCard() {
   const variables = extractVariables(formula.equation);
    
   return (
-    <div className="min-h-screen bg-secondary p-4 md:p-8">
+    <div className="">
       <Link to={`/`} >
-      <button className="text-sm text-primary mb-4 hover:underline">← Back</button>
+      <button className="">← Back</button>
       </Link>  
-      <div className="bg-white rounded-xl shadow p-6 space-y-6">
-      <h2 className="text-xl font-semibold text-primary">{formula.name}</h2>
+      <div className="">
+      <h2 className="">{formula.name}</h2>
       </div>
-      <form onSubmit={(e) => e.preventDefault(e)} className="space-y-4">
+      <form onSubmit={(e) => e.preventDefault(e)} className="">
 
       
         {variables.map((v) => (
-          <div key={v} className="flex flex-col">
-          <label htmlFor={v} className="text-sm font-medium text-gray-700">{v}</label>
+          <div key={v} className="">
+          <label htmlFor={v} className="">{v}</label>
           <input
             key={v}
             type="number"
@@ -64,15 +64,15 @@ export default function FormulaCard() {
             value={inputValues[v] || ""}
             onChange={(e) => handleChange(v, parseFloat(e.target.value))}
             required
-            className="mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
+            className=""
             />
             </div>
       ))}
           
-      <div className="flex gap-2">
+      <div className="">
         <button
           onClick={() => handleExecute(formula.name)}
-          className="w-full bg-accent text-white py-3 rounded-lg hover:bg-green-600 transition"
+          className=""
         >
           Execute
         </button>
@@ -83,7 +83,7 @@ export default function FormulaCard() {
           Deletar
         </button> */}
         {result && (
-        <div className="bg-secondary text-gray-700 rounded-lg p-4">
+        <div className="">
           Result: <strong>{result}</strong>
         </div>
       )}
