@@ -6,7 +6,9 @@ import { useAuth } from "../hooks/useAuth";
 const FormulaContext = createContext();
 export const FormulaProvider = ({ children }) => {
     const [formulas, setFormulas] = useState([]);
-    const { token } = useAuth();
+    const { token, redirectToLoginPage } = useAuth();
+
+    redirectToLoginPage(token);
     const loadFormulas = useCallback(async () => { 
         if (token) {
             console.log("Loading formulas with token:", token);
