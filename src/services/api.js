@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "../config/env";
 
-const BASE_URL = `${API_BASE_URL}/formulas`;
+const BASE_URL = `${API_BASE_URL}/api/formulas`;
 
 export const fetchFormulas = async (token) => {
   const res = await fetch(`${BASE_URL}/getAll`, {
