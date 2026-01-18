@@ -1,4 +1,6 @@
-const BASE_URL = "http://localhost:8080/api/formulas";
+import { API_BASE_URL } from "../config/env";
+
+const BASE_URL = `${API_BASE_URL}/formulas`;
 
 export const fetchFormulas = async (token) => {
   const res = await fetch(`${BASE_URL}/getAll`, {
