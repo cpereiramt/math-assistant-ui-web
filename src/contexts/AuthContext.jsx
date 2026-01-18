@@ -1,11 +1,11 @@
-import { createContext, useState } from "react";
+import { createContext, useMemo, useState } from "react";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
 
-  const login = (t) => {    
+  const login = (t) => {
     localStorage.setItem("token", t);
     setToken(t);
   };
@@ -14,22 +14,20 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("token");
     setToken(null);
   };
-  const redirectToLoginPage = (token) => {
+
+  const redirectToLoginPage = () => {
     if (!token) {
-      // Redirect to your login page only first time 
-      // or when the token is not available
-      console.log("No token found, redirecting to login page...");
-      window.location.href = "/auth/google";
-      localStorage.setItem("token", "invalid_token");
+      // ideal: redirecionar para o endpoint de login do BACKEND (não do front)
+      window.location.href = "${API_BASE_URL}/oauth2/authorization/google";
     }
-   }
-  
-  
-  return (
-    <AuthContext.Provider value={{ token, redirectToLoginPage, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+  };
+
+  const value = useMemo(
+    () => ({ token, login, logout, redirectToLoginPage }),
+    [token]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export default AuthContext;

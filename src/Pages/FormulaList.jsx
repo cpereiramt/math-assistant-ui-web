@@ -1,5 +1,4 @@
 import React from "react";
-import { useAuth } from "../hooks/useAuth";
 import {useFormula}  from "../hooks/useFormulas";
 import { Link } from 'react-router-dom';
 import 'katex/dist/katex.min.css';
@@ -7,32 +6,14 @@ import { BlockMath } from 'react-katex';
 import LoginWithGoogle from "./LoginWithGoogle";
 
 export const FormulaList = () => {
-    const { token, login } = useAuth();
     const { formulas } = useFormula();
-     if (!token) {
-        const fakeLogin = () => {
-        const t = prompt("Cole seu token JWT:");
-        if (t) login(t);
-        };
-        return (
-        <div className="">
-            <button
-            onClick={fakeLogin}
-            className=""
-            >
-            Login com Google
-            </button>
-        </div>
-        ); 
-    } 
-
+   
   return (
-    formulas.length === 0 ? (
+    formulas.length === 0 || formulas.length  ===  undefined  ? (
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
           <h1 className="text-3xl md:text-5xl font-bold mb-8 text-center text-gray-800 dark:text-white">
             No Formulas Available
           </h1>
-          <LoginWithGoogle />
         </div>
       ) : (
         <div className="p-4 md:p-8 max-w-7xl mx-auto">

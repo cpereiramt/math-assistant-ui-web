@@ -1,9 +1,28 @@
 import React from "react";
+import { API_BASE_URL } from "../config/env";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import { useEffect } from "react";
 
 const LoginWithGoogle = () => {
+   const { token } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Se já está autenticado, não faz sentido ficar na tela de login
+    if (token) {
+      const returnTo = sessionStorage.getItem("returnTo");
+      sessionStorage.removeItem("returnTo");
+
+      navigate(returnTo || "/", { replace: true });
+      return;
+    }
+  }, [token, navigate]);
   const handleLogin = () => {
+    sessionStorage.setItem("returnTo", window.location.pathname + window.location.search);
+
     // Trigger your OAuth flow here
-    window.location.href = "/auth/google"; // or call a function from your auth client
+    window.location.href = `${API_BASE_URL}/oauth2/authorization/google`; // or call a function from your auth client
   };
 
   return (
