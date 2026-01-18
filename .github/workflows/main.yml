@@ -14,8 +14,8 @@ jobs:
            node-version: 20
       - run: npm ci
       - run: npm run build
-       env:
-       VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+        env:
+           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
