@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { useFormula } from "../hooks/useFormulas";
 import { useAuth } from "../hooks/useAuth";
 import { executeFormula } from "../services/api";
+import 'katex/dist/katex.min.css';
+import { BlockMath } from 'react-katex';
 
 
 
@@ -30,14 +32,32 @@ const formula  = formulas.find((f) => f.id === id);
     setInputValues((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleExecute = async (formulaName) => {
-    try {
-      const res = await executeFormula(formulaName, inputValues, token);
-      setResult(res);
-    } catch (err) {
-      setResult("Error when executing equation " + err);
+  const handleExecute = async () => {
+  try {
+    let values = [];
+    console.log("Executing formula -----------> :", formula);
+    console.log("With input values -----------> :", Object.values(inputValues).map(Number));
+    let res;
+    if (!formula.variable) {
+      // fixa: respeita a ordem de parameters
+      values = (formula.parameters || []).map((p) => Number(inputValues[p] ?? 0));
+      // testar a execução no frontend com formulas fixas
+      console.log("Fixed values -----------> :", values);
+      res = await executeFormula({ formulaName: formula.name, values }, token);
+
+    } else {
+      // variádica: inputValues precisa virar array
+      values = Object.values(inputValues).map(Number);
+      console.log("Variadic values -----------> :", values);
+      res = await executeFormula({ formulaName: formula.name, values }, token);
+
     }
-  };
+
+    setResult(res);
+  } catch (err) {
+    setResult("Error when executing equation: " + err);
+  }
+};
 
   //TODO: Insert all this functions on FormulaContext
   /* const handleDelete = async (id) => {
@@ -45,7 +65,7 @@ const formula  = formulas.find((f) => f.id === id);
     const updated = await fetchFormulas(token);
     setFormulas(updated);
   }; */
-  const variables = extractVariables(formula.equation);
+  const variables = formula.variable ? extractVariables(formula.equation) : (formula.parameters || []);
    
   return (
     < div className="p-4 md:p-8 max-w-2xl mx-auto">
@@ -66,6 +86,42 @@ const formula  = formulas.find((f) => f.id === id);
       <h1 className="text-2xl md:text-4xl font-bold mb-6 text-center text-gray-800 dark:text-white">
         Execute: {formula.name}
       </h1>
+
+      <div className="flex justify-center gap-2 mb-4">
+        <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
+          {formula.group}
+        </span>
+        <span className={`text-xs px-2 py-1 rounded ${formula.variable ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'}`}>
+          {formula.variable ? 'Variádica' : 'Fixa'}
+        </span>
+      </div>
+
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Equation:</p>
+      <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded text-sm text-gray-800 dark:text-gray-200 mb-3">
+        <BlockMath math={formula.equation} />
+      </div>
+
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Parameters:</p>
+      {!formula.variable ? (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {(formula.parameters || []).map((param) => (
+            <span
+              key={param}
+              className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 rounded"
+            >
+              {param}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 mb-4">
+          <span className="inline-block px-2 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 rounded">
+            x1, x2, ..., xn
+          </span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">Variádica — aceita qualquer número de parâmetros</span>
+        </div>
+      )}
+
       <form
         onSubmit={(e) => e.preventDefault(e)}
         className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-md p-6 space-y-4"
@@ -89,16 +145,10 @@ const formula  = formulas.find((f) => f.id === id);
           
         <div className="text-right">
           <button
-          onClick={() => handleExecute(formula.name)}
+          onClick={() => handleExecute(formula)}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition"        >
           Execute
         </button>
-        {/* <button
-          onClick={() => handleDelete(formula.id)}
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded"
-        >
-          Deletar
-        </button> */}
         <div className="mt-6 text-center">
         {result !== null && (
           <p className="text-lg font-semibold text-green-600 underline underline-offset-4">

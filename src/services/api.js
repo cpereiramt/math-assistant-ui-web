@@ -7,8 +7,8 @@ export const fetchFormulas = async () => {
   return await res.data;
 };
 
-export const executeFormula = async (name, body) => {
-  const res = await api.post(`${BASE_URL}/execute?formulaName=${name}`, body);
+export const executeFormula = async (body) => {
+  const res = await api.post(`${BASE_URL}/execute`, body);
   return await res.data;
 };
 
