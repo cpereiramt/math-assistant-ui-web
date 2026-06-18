@@ -46,7 +46,7 @@ export const FormulaList = () => {
 
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Equation:</p>
                   <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded text-sm text-gray-800 dark:text-gray-200 mb-3">
-                    <BlockMath math={formula.equation} />
+                    <BlockMath math={formula.displayEquation} />
                   </div>
 
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Parameters:</p>
