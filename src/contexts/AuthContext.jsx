@@ -1,4 +1,5 @@
 import { createContext, useCallback, useMemo, useState } from "react";
+import { API_BASE_URL } from "../config/env";
 
 const AuthContext = createContext();
 
@@ -18,7 +19,7 @@ export const AuthProvider = ({ children }) => {
   const redirectToLoginPage = useCallback(() => {
     if (!token) {
       // ideal: redirecionar para o endpoint de login do BACKEND (não do front)
-      window.location.href = "${API_BASE_URL}/oauth2/authorization/google";
+      window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
     }
   }, [token]);  
 
