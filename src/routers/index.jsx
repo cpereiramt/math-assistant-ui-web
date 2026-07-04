@@ -5,6 +5,9 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { FormulaList } from "../Pages/FormulaList";
 import FormulaCard from "../components/FormulaCard";
 import LoginWithGoogle from "../Pages/LoginWithGoogle";
+import AppLayout from "../components/AppLayout";
+import FormulaBuilder from "../Pages/FormulaBuilder";
+import MyFormulaList from "../Pages/MyFormulaList";
 
 import { NotFound } from "../Pages/NotFound";
 import { ProtectedRoute } from "../auth/ProtectedRoute";
@@ -23,21 +26,18 @@ export const AppRouter = () => {
 
         {/* Protegidas */}
         <Route
-          path="/"
           element={
             <ProtectedRoute>
-              <FormulaList />
+              <AppLayout />
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/formula/:id"
-          element={
-            <ProtectedRoute>
-              <FormulaCard />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route index element={<FormulaList />} />
+          <Route path="formula/:id" element={<FormulaCard />} />
+          <Route path="my-formulas" element={<MyFormulaList />} />
+          <Route path="my-formulas/new" element={<FormulaBuilder />} />
+          <Route path="my-formulas/:id/edit" element={<FormulaBuilder />} />
+        </Route>
 
         <Route path="*" element={<NotFound />} />
       </Routes>
