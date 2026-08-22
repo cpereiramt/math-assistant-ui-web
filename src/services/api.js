@@ -22,6 +22,16 @@ export const validateMyFormula = async (body) => {
   return await res.data;
 };
 
+export const fetchFormulaBuilderCatalog = async () => {
+  const res = await api.get(`${BASE_URL}/builder/catalog`);
+  return await res.data;
+};
+
+export const previewBuilderFormula = async (formula, variables) => {
+  const res = await api.post(`${BASE_URL}/builder/preview`, { formula, variables });
+  return await res.data;
+};
+
 export const createMyFormula = async (body) => {
   const res = await api.post(`${BASE_URL}/mine`, body);
   return await res.data;
