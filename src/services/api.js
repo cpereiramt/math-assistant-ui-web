@@ -7,6 +7,17 @@ export const fetchFormulas = async () => {
   return await res.data;
 };
 
+export const searchFormulas = async ({ q, groups = [], type, page = 0, size = 12,
+  sortBy = "name", direction = "ASC" } = {}) => {
+  const params = { scope: "PUBLIC", page, size, sortBy, direction };
+  if (q?.trim()) params.q = q.trim();
+  if (groups.length) params.groups = groups.join(",");
+  if (type) params.type = type;
+
+  const res = await api.get(`${BASE_URL}/search`, { params });
+  return res.data;
+};
+
 export const fetchMyFormulas = async () => {
   const res = await api.get(`${BASE_URL}/mine`);
   return await res.data;
