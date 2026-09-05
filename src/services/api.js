@@ -1,6 +1,12 @@
 import { API_BASE_URL } from "../config/env";
 import { api } from "../utils/axiosConfig";
 const BASE_URL = `${API_BASE_URL}/api/formulas`;
+const USERS_BASE_URL = `${API_BASE_URL}/api/users`;
+
+export const fetchCurrentUserProfile = async () => {
+  const res = await api.get(`${USERS_BASE_URL}/me`);
+  return res.data;
+};
 
 export const fetchFormulas = async () => {
   const res = await api.get(`${BASE_URL}/public`);
