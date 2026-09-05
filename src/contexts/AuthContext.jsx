@@ -1,10 +1,41 @@
-import { createContext, useCallback, useMemo, useState } from "react";
+import { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import { API_BASE_URL } from "../config/env";
+import { fetchCurrentUserProfile } from "../services/api";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem("token"));
+  const [user, setUser] = useState(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(Boolean(token));
+  const [profileError, setProfileError] = useState(null);
+
+  const loadProfile = useCallback(async () => {
+    if (!localStorage.getItem("token")) return;
+
+    setIsProfileLoading(true);
+    setProfileError(null);
+    try {
+      const profile = await fetchCurrentUserProfile();
+      setUser(profile);
+    } catch (error) {
+      setUser(null);
+      setProfileError(error);
+    } finally {
+      setIsProfileLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (token) {
+      loadProfile();
+      return;
+    }
+
+    setUser(null);
+    setProfileError(null);
+    setIsProfileLoading(false);
+  }, [token, loadProfile]);
 
   const login = useCallback((t) => {
     localStorage.setItem("token", t);
@@ -14,6 +45,7 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(() => {
     localStorage.removeItem("token");
     setToken(null);
+    setUser(null);
   }, []);
 
   const redirectToLoginPage = useCallback(() => {
@@ -24,8 +56,26 @@ export const AuthProvider = ({ children }) => {
   }, [token]);  
 
   const value = useMemo(
-    () => ({ token, login, logout, redirectToLoginPage }),
-    [token, login, logout, redirectToLoginPage]
+    () => ({
+      token,
+      user,
+      isProfileLoading,
+      profileError,
+      login,
+      logout,
+      reloadProfile: loadProfile,
+      redirectToLoginPage,
+    }),
+    [
+      token,
+      user,
+      isProfileLoading,
+      profileError,
+      login,
+      logout,
+      loadProfile,
+      redirectToLoginPage,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
