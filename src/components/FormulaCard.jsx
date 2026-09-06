@@ -4,6 +4,7 @@ import { useFormula } from "../hooks/useFormulas";
 import { executeFormula } from "../services/api";
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
+import FormulaSocialPanel from "./FormulaSocialPanel";
 
 export default function FormulaCard() {
   const [inputValues, setInputValues] = useState({});
@@ -81,7 +82,7 @@ export default function FormulaCard() {
         </button>
       </Link>
       <h1 className="text-2xl md:text-4xl font-bold mb-6 text-center text-gray-800 dark:text-white">
-        Execute: {formula.name}
+          Execute: {formula.name}
       </h1>
 
       <div className="flex justify-center gap-2 mb-4">
@@ -89,7 +90,7 @@ export default function FormulaCard() {
           {formula.group}
         </span>
         <span className={`text-xs px-2 py-1 rounded ${formula.variable ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'}`}>
-          {formula.variable ? 'Variadica' : 'Fixa'}
+          {formula.variable ? 'Variadic' : 'Fixed'}
         </span>
       </div>
 
@@ -115,7 +116,7 @@ export default function FormulaCard() {
           <span className="inline-block px-2 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 rounded">
             x1, x2, ..., xn
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">Variadica - aceita qualquer numero de parametros</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">Variadic - accepts any number of parameters</span>
         </div>
       )}
 
@@ -187,6 +188,7 @@ export default function FormulaCard() {
           </div>
         </div>
       </form>
+      <FormulaSocialPanel formula={formula} />
     </div>
   );
 }

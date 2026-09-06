@@ -13,8 +13,15 @@ export const fetchFormulas = async () => {
   return await res.data;
 };
 
-export const searchFormulas = async ({ q, groups = [], type, page = 0, size = 12,
-  sortBy = "name", direction = "ASC" } = {}) => {
+export const searchFormulas = async ({
+  q,
+  groups = [],
+  type,
+  page = 0,
+  size = 12,
+  sortBy = "name",
+  direction = "ASC",
+} = {}) => {
   const params = { scope: "PUBLIC", page, size, sortBy, direction };
   if (q?.trim()) params.q = q.trim();
   if (groups.length) params.groups = groups.join(",");
@@ -22,6 +29,15 @@ export const searchFormulas = async ({ q, groups = [], type, page = 0, size = 12
 
   const res = await api.get(`${BASE_URL}/search`, { params });
   return res.data;
+};
+
+export const fetchMostRatedFormulas = async ({ page = 0, size = 12 } = {}) => {
+  return searchFormulas({
+    page,
+    size,
+    sortBy: "averageRating",
+    direction: "DESC",
+  });
 };
 
 export const fetchMyFormulas = async () => {
@@ -45,7 +61,10 @@ export const fetchFormulaBuilderCatalog = async () => {
 };
 
 export const previewBuilderFormula = async (formula, variables) => {
-  const res = await api.post(`${BASE_URL}/builder/preview`, { formula, variables });
+  const res = await api.post(`${BASE_URL}/builder/preview`, {
+    formula,
+    variables,
+  });
   return await res.data;
 };
 
@@ -62,6 +81,59 @@ export const updateMyFormula = async (id, body) => {
 export const deleteMyFormula = async (id) => {
   const res = await api.delete(`${BASE_URL}/mine/${id}`);
   return await res.data;
+};
+
+export const publishMyFormula = async (id) => {
+  const res = await api.post(`${BASE_URL}/mine/${id}/publish`);
+  return res.data;
+};
+
+export const rateFormula = async (id, value) => {
+  const res = await api.post(`${BASE_URL}/${id}/ratings`, { value });
+  return res.data;
+};
+
+export const removeFormulaRating = async (id) => {
+  const res = await api.delete(`${BASE_URL}/${id}/ratings`);
+  return res.data;
+};
+
+export const fetchFormulaComments = async (
+  id,
+  { page = 0, size = 20 } = {},
+) => {
+  const res = await api.get(`${BASE_URL}/${id}/comments`, {
+    params: { page, size },
+  });
+  return res.data;
+};
+
+export const fetchFormulaCommentReplies = async (
+  formulaId,
+  commentId,
+  { page = 0, size = 20 } = {},
+) => {
+  const res = await api.get(
+    `${BASE_URL}/${formulaId}/comments/${commentId}/replies`,
+    {
+      params: { page, size },
+    },
+  );
+  return res.data;
+};
+
+export const addFormulaComment = async (id, body) => {
+  const res = await api.post(`${BASE_URL}/${id}/comments`, body);
+  return res.data;
+};
+
+export const updateFormulaComment = async (commentId, body) => {
+  const res = await api.patch(`${BASE_URL}/comments/${commentId}`, body);
+  return res.data;
+};
+
+export const deleteFormulaComment = async (commentId) => {
+  await api.delete(`${BASE_URL}/comments/${commentId}`);
 };
 
 export const executeFormula = async (body) => {

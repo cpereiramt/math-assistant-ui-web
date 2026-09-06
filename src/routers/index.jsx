@@ -8,6 +8,7 @@ import LoginWithGoogle from "../Pages/LoginWithGoogle";
 import AppLayout from "../components/AppLayout";
 import FormulaBuilder from "../Pages/FormulaBuilder";
 import MyFormulaList from "../Pages/MyFormulaList";
+import MostRatedFormulas from "../Pages/MostRatedFormulas";
 
 import { NotFound } from "../Pages/NotFound";
 import { ProtectedRoute } from "../auth/ProtectedRoute";
@@ -32,7 +33,8 @@ export const AppRouter = () => {
             </ProtectedRoute>
           }
         >
-          <Route index element={<FormulaList />} />
+          <Route index element={<MostRatedFormulas />} />
+          <Route path="formulas" element={<FormulaList />} />
           <Route path="formula/:id" element={<FormulaCard />} />
           <Route path="my-formulas" element={<MyFormulaList />} />
           <Route path="my-formulas/new" element={<FormulaBuilder />} />

@@ -3,7 +3,8 @@ import { NavLink, Outlet } from "react-router-dom";
 import UserProfileMenu from "./UserProfileMenu";
 
 const navItems = [
-  { to: "/", label: "General formulas" },
+  { to: "/", label: "Most rated" },
+  { to: "/formulas", label: "Explore formulas" },
   { to: "/my-formulas", label: "My formulas" },
   { to: "/my-formulas/new", label: "Create formula" },
 ];

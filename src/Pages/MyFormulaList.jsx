@@ -6,6 +6,7 @@ import {
   deleteMyFormula,
   executeMyFormula,
   fetchMyFormulas,
+  publishMyFormula,
 } from "../services/api";
 
 function FormulaRunner({ formula }) {
@@ -112,6 +113,16 @@ export default function MyFormulaList() {
     }
   };
 
+  const handlePublish = async (id) => {
+    try {
+      const response = await publishMyFormula(id);
+      setMessage(response.message || "Formula published successfully.");
+      await loadFormulas();
+    } catch (error) {
+      setMessage(`Error publishing formula: ${error.message}`);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -179,6 +190,13 @@ export default function MyFormulaList() {
                     className="rounded-md border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
                   >
                     Delete
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handlePublish(formula.id)}
+                    className="rounded-md border border-amber-200 px-3 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50"
+                  >
+                    Publish
                   </button>
                 </div>
               </div>
