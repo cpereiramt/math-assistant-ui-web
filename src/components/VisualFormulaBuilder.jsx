@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import SourceVersionPicker from "./SourceVersionPicker";
 
 const operators = [
   { value: "ADD", label: "Addition", symbol: "+", arity: 2 },
@@ -19,6 +20,7 @@ function createNode(item) {
       type: "FORMULA",
       sourceFormulaId: item.formula.id,
       sourceName: item.formula.name,
+      sourceVersion: item.formula.version ?? 1,
       bindings: Object.fromEntries(
         (item.formula.parameters || []).map((parameter) => [parameter, null]),
       ),
@@ -293,7 +295,7 @@ export default function VisualFormulaBuilder({ catalog, tree, onTreeChange }) {
       <aside className="rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="font-semibold text-slate-900">Properties</h2>
         {!selectedNode && (
-          <p className="mt-2 text-sm text-slate-500">Select a variable or constant to edit it.</p>
+          <p className="mt-2 text-sm text-slate-500">Select a block to see its properties.</p>
         )}
         {selectedNode?.type === "VARIABLE" && (
           <label className="mt-4 block text-sm font-medium text-slate-700">
@@ -318,7 +320,7 @@ export default function VisualFormulaBuilder({ catalog, tree, onTreeChange }) {
           </label>
         )}
         {selectedNode?.type === "FORMULA" && (
-          <p className="mt-3 text-sm text-slate-600">Source: {selectedNode.sourceName}</p>
+          <SourceVersionPicker key={selectedNode.sourceFormulaId} node={selectedNode} onChange={changeSelected} />
         )}
         {selectedNode?.type === "OPERATOR" && (
           <p className="mt-3 text-sm text-slate-600">

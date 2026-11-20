@@ -5,9 +5,18 @@ import { BlockMath } from "react-katex";
 import {
   deleteMyFormula,
   executeMyFormula,
+  executeFormula,
   fetchMyFormulas,
   publishMyFormula,
 } from "../services/api";
+
+const statusLabels = {
+  PRIVATE: "Private",
+  UNDER_REVIEW: "Under review",
+  PUBLIC: "Published",
+  REJECTED: "Rejected",
+  DEPRECATED: "Deprecated",
+};
 
 function FormulaRunner({ formula }) {
   const [inputValues, setInputValues] = useState({});
@@ -29,7 +38,8 @@ function FormulaRunner({ formula }) {
     }, {});
 
     try {
-      const response = await executeMyFormula({
+      const execute = formula.status === "PUBLIC" ? executeFormula : executeMyFormula;
+      const response = await execute({
         formulaName: formula.name,
         variables,
       });
@@ -82,13 +92,13 @@ export default function MyFormulaList() {
   const [formulas, setFormulas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [busyId, setBusyId] = useState(null);
 
   const loadFormulas = async () => {
     setIsLoading(true);
     try {
       const response = await fetchMyFormulas();
       setFormulas(response);
-      setMessage("");
     } catch (error) {
       setMessage(`Error loading formulas: ${error.message}`);
     } finally {
@@ -105,21 +115,32 @@ export default function MyFormulaList() {
     if (!shouldDelete) return;
 
     try {
+      setBusyId(id);
       const response = await deleteMyFormula(id);
       setMessage(response);
       await loadFormulas();
     } catch (error) {
       setMessage(`Error deleting formula: ${error.message}`);
+    } finally {
+      setBusyId(null);
     }
   };
 
   const handlePublish = async (id) => {
+    setBusyId(id);
     try {
       const response = await publishMyFormula(id);
-      setMessage(response.message || "Formula published successfully.");
-      await loadFormulas();
+      setFormulas((current) => current.map((formula) =>
+        formula.id === id ? { ...formula, status: response.status ?? "UNDER_REVIEW" } : formula,
+      ));
+      setMessage("Formula submitted for review.");
     } catch (error) {
-      setMessage(`Error publishing formula: ${error.message}`);
+      setMessage(error.response?.status === 409
+        ? "This formula changed. The list has been refreshed."
+        : `Error submitting formula: ${error.message}`);
+      if (error.response?.status === 409) await loadFormulas();
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -129,7 +150,7 @@ export default function MyFormulaList() {
         <div>
           <h1 className="text-3xl font-semibold text-slate-950">My formulas</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Private formulas created in your formula builder.
+            Your drafts, review decisions, and published formulas.
           </p>
         </div>
         <Link
@@ -141,7 +162,7 @@ export default function MyFormulaList() {
       </div>
 
       {message && (
-        <div className="mb-6 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+        <div role="status" className="mb-6 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
           {message}
         </div>
       )}
@@ -170,14 +191,14 @@ export default function MyFormulaList() {
                       {formula.group}
                     </span>
                     <span className="rounded bg-emerald-50 px-2 py-1 text-xs text-emerald-700">
-                      Private
+                      {statusLabels[formula.status] ?? formula.status}
                     </span>
                     <span className="rounded bg-blue-50 px-2 py-1 text-xs text-blue-700">
                       {formula.inputMode === "BUILDER" ? "Visual builder" : "Typed equation"}
                     </span>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                {formula.status === "PRIVATE" && <div className="flex flex-wrap gap-2">
                   <Link
                     to={`/my-formulas/${formula.id}/edit`}
                     className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
@@ -186,6 +207,7 @@ export default function MyFormulaList() {
                   </Link>
                   <button
                     type="button"
+                    disabled={busyId !== null}
                     onClick={() => handleDelete(formula.id)}
                     className="rounded-md border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
                   >
@@ -193,13 +215,29 @@ export default function MyFormulaList() {
                   </button>
                   <button
                     type="button"
+                    disabled={busyId !== null}
                     onClick={() => handlePublish(formula.id)}
                     className="rounded-md border border-amber-200 px-3 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50"
                   >
-                    Publish
+                    Submit for review
                   </button>
-                </div>
+                </div>}
+                {formula.status === "PUBLIC" && (
+                  <Link to={`/formula/${formula.id}/versions`} className="text-sm font-medium text-blue-700 hover:underline">
+                    Version history
+                  </Link>
+                )}
               </div>
+
+              {formula.reviewReason && (
+                <div className="mt-3 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
+                  <p className="font-medium">Review decision</p>
+                  <p className="whitespace-pre-wrap break-words">{formula.reviewReason}</p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    {[formula.reviewedBy, formula.reviewedAt && new Date(formula.reviewedAt).toLocaleString()].filter(Boolean).join(" · ")}
+                  </p>
+                </div>
+              )}
 
               {formula.description && (
                 <p className="mt-3 text-sm text-slate-600">{formula.description}</p>
@@ -220,7 +258,7 @@ export default function MyFormulaList() {
                 ))}
               </div>
 
-              <FormulaRunner formula={formula} />
+              {!formula.variable && ["PRIVATE", "PUBLIC"].includes(formula.status) && <FormulaRunner formula={formula} />}
             </article>
           ))}
         </div>

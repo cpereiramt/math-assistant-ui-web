@@ -7,6 +7,9 @@ import FormulaCard from "../components/FormulaCard";
 import LoginWithGoogle from "../Pages/LoginWithGoogle";
 import AppLayout from "../components/AppLayout";
 import FormulaBuilder from "../Pages/FormulaBuilder";
+import AdminRoute from "../auth/AdminRoute";
+import FormulaModeration from "../Pages/FormulaModeration";
+import FormulaVersionHistory from "../Pages/FormulaVersionHistory";
 import MyFormulaList from "../Pages/MyFormulaList";
 import MostRatedFormulas from "../Pages/MostRatedFormulas";
 
@@ -36,6 +39,9 @@ export const AppRouter = () => {
           <Route index element={<MostRatedFormulas />} />
           <Route path="formulas" element={<FormulaList />} />
           <Route path="formula/:id" element={<FormulaCard />} />
+          <Route path="formula/:id/versions" element={<FormulaVersionHistory />} />
+          <Route path="admin/formulas" element={<AdminRoute><FormulaModeration /></AdminRoute>} />
+          <Route path="admin/formulas/:id/revision" element={<AdminRoute><FormulaBuilder revision /></AdminRoute>} />
           <Route path="my-formulas" element={<MyFormulaList />} />
           <Route path="my-formulas/new" element={<FormulaBuilder />} />
           <Route path="my-formulas/:id/edit" element={<FormulaBuilder />} />
