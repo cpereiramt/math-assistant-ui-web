@@ -1,8 +1,9 @@
 import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 import UserProfileMenu from "./UserProfileMenu";
 
-const navItems = [
+const standardNavItems = [
   { to: "/", label: "Most rated" },
   { to: "/formulas", label: "Explore formulas" },
   { to: "/my-formulas", label: "My formulas" },
@@ -10,6 +11,10 @@ const navItems = [
 ];
 
 export default function AppLayout() {
+  const { user } = useAuth();
+  const navItems = user?.role === "ADMIN"
+    ? [...standardNavItems, { to: "/admin/formulas", label: "Moderation" }]
+    : standardNavItems;
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-slate-200 bg-white px-4 py-6 md:block">

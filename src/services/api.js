@@ -50,8 +50,8 @@ export const fetchMyFormula = async (id) => {
   return await res.data;
 };
 
-export const validateMyFormula = async (body) => {
-  const res = await api.post(`${BASE_URL}/mine/validate`, body);
+export const validateMyFormula = async (body, formulaId) => {
+  const res = await api.post(`${BASE_URL}/mine/validate`, body, { params: { formulaId } });
   return await res.data;
 };
 
@@ -60,11 +60,11 @@ export const fetchFormulaBuilderCatalog = async () => {
   return await res.data;
 };
 
-export const previewBuilderFormula = async (formula, variables) => {
+export const previewBuilderFormula = async (formula, variables, formulaId) => {
   const res = await api.post(`${BASE_URL}/builder/preview`, {
     formula,
     variables,
-  });
+  }, { params: { formulaId } });
   return await res.data;
 };
 
@@ -148,4 +148,24 @@ export const executeMyFormula = async (body) => {
 
 export const deleteFormula = async (id) => {
   await api.delete(`${BASE_URL}/${id}`);
+};
+
+export const fetchFormulaVersions = async (id, signal) => {
+  const res = await api.get(`${BASE_URL}/${encodeURIComponent(id)}/versions`, { signal });
+  return res.data;
+};
+
+export const fetchPendingFormulas = async (signal) => {
+  const res = await api.get(`${BASE_URL}/admin/pending`, { signal });
+  return res.data;
+};
+
+export const reviewFormula = async (id, decision, reason) => {
+  const res = await api.post(`${BASE_URL}/admin/${encodeURIComponent(id)}/${decision}`, { reason });
+  return res.data;
+};
+
+export const reviseFormula = async (id, body) => {
+  const res = await api.put(`${BASE_URL}/admin/${encodeURIComponent(id)}/revision`, body);
+  return res.data;
 };

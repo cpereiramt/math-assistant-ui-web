@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams, Link } from 'react-router-dom';
+import { Link, useParams } from "react-router-dom";
 import { useFormula } from "../hooks/useFormulas";
 import { executeFormula } from "../services/api";
 import 'katex/dist/katex.min.css';
@@ -188,6 +188,9 @@ export default function FormulaCard() {
           </div>
         </div>
       </form>
+      <Link to={`/formula/${formula.id}/versions`} className="mt-4 inline-block text-sm font-medium text-blue-700 hover:underline">
+        Version history
+      </Link>
       <FormulaSocialPanel formula={formula} />
     </div>
   );

@@ -10,8 +10,7 @@ export const FormulaProvider = ({ children }) => {
 
     const loadFormulas = useCallback(async () => { 
         if (token) {
-            console.log("Loading formulas with token:", token);
-            fetchFormulas(token).then(setFormulas).catch(console.error);
+            fetchFormulas().then(setFormulas).catch(console.error);
         }
         
         
@@ -20,8 +19,14 @@ export const FormulaProvider = ({ children }) => {
         loadFormulas();
     }, [token, loadFormulas]);
 
+    const updatePublishedFormula = useCallback((formula) => {
+        setFormulas((current) => current.some(({ id }) => id === formula.id)
+            ? current.map((entry) => entry.id === formula.id ? formula : entry)
+            : [...current, formula]);
+    }, []);
+
     return (
-        <FormulaContext.Provider value={{ formulas }}>
+        <FormulaContext.Provider value={{ formulas, updatePublishedFormula }}>
             {children}
         </FormulaContext.Provider>
     );
