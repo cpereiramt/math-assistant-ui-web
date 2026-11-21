@@ -4,6 +4,7 @@ import { fetchMostRatedFormulas } from "../services/api";
 
 export default function MostRatedFormulas() {
   const [result, setResult] = useState({ content: [], totalPages: 0, totalElements: 0 });
+  const [days, setDays] = useState(30);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -13,7 +14,7 @@ export default function MostRatedFormulas() {
     setLoading(true);
     setError("");
 
-    fetchMostRatedFormulas({ page, size: 12 })
+    fetchMostRatedFormulas({ page, size: 12, days })
       .then((data) => active && setResult(data))
       .catch((requestError) => {
         if (active) {
@@ -23,7 +24,7 @@ export default function MostRatedFormulas() {
       .finally(() => active && setLoading(false));
 
     return () => { active = false; };
-  }, [page]);
+  }, [page, days]);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -31,12 +32,18 @@ export default function MostRatedFormulas() {
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">Community picks</p>
         <div className="mt-3 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <h1 className="text-4xl font-semibold tracking-tight text-slate-950">Most rated formulas</h1>
+            <h1 className="text-4xl font-semibold tracking-tight text-slate-950">Formula ranking</h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Start with the public formulas the community has found most useful.
+              Scores combine recent upvotes and downvotes and account for the number of eligible votes.
             </p>
           </div>
-          {!loading && !error && <p className="text-sm text-slate-500">{result.totalElements} public formulas</p>}
+          <label className="grid gap-1 text-sm font-medium">
+            Ranking period
+            <select value={days} onChange={(event) => { setDays(Number(event.target.value)); setPage(0); }}
+              className="rounded border border-slate-300 bg-white p-2">
+              {[7, 30, 90].map((period) => <option key={period} value={period}>Last {period} days</option>)}
+            </select>
+          </label>
         </div>
       </header>
 
@@ -46,7 +53,7 @@ export default function MostRatedFormulas() {
       )}
       {!loading && !error && result.content.length === 0 && (
         <div className="mt-8 border border-dashed border-slate-300 p-10 text-center">
-          <h2 className="text-lg font-semibold text-slate-950">No rated formulas yet</h2>
+          <h2 className="text-lg font-semibold text-slate-950">No ranked formulas in this period</h2>
           <p className="mt-2 text-sm text-slate-600">Be the first to rate a public formula.</p>
         </div>
       )}

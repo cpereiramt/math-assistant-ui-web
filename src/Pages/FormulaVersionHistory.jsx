@@ -46,7 +46,7 @@ function VersionHistory({ id }) {
               <pre className="mt-3 whitespace-pre-wrap break-words rounded bg-slate-50 p-3 text-sm">{version.equation}</pre>
               <p className="mt-2 text-sm text-slate-600">{version.variable ? "Variadic formula" : version.parameters?.join(", ")}</p>
               <p className="mt-3 text-sm font-medium">
-                {[version.reviewedBy, version.reviewedAt && new Date(version.reviewedAt).toLocaleString()].filter(Boolean).join(" · ") || "No review recorded"}
+                {version.reviewedAt ? new Date(version.reviewedAt).toLocaleString() : "No review recorded"}
               </p>
               {version.reviewReason && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-700">{version.reviewReason}</p>}
             </li>

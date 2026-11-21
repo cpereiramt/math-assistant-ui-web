@@ -1,23 +1,55 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useFormula } from "../hooks/useFormulas";
+import { fetchFormulaAuthor, fetchFormulaDetail, recordFormulaView } from "../services/community";
+import ReportForm from "./ReportForm";
 import { executeFormula } from "../services/api";
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
 import FormulaSocialPanel from "./FormulaSocialPanel";
 
 export default function FormulaCard() {
+  const { id } = useParams();
+  return <FormulaDetail key={id} id={id} />;
+}
+
+function FormulaDetail({ id }) {
   const [inputValues, setInputValues] = useState({});
   const [variadicValues, setVariadicValues] = useState([""]);
   const [result, setResult] = useState(null);
 
-  const { id } = useParams();
-  const { formulas } = useFormula();
+  const [formula, setFormula] = useState(null);
+  const [author, setAuthor] = useState(null);
+  const [error, setError] = useState("");
 
-  const formula = formulas.find((f) => f.id === id);
-  if (!formula) {
-    return <div>Loading equations...</div>;
-  }
+  useEffect(() => {
+    const request = new AbortController();
+    fetchFormulaDetail(id, request.signal).then(setFormula).catch((failure) => {
+      if (!request.signal.aborted) setError(failure.response?.status === 404
+        ? "This formula is no longer public." : "Could not load the formula.");
+    });
+    fetchFormulaAuthor(id, request.signal).then(setAuthor).catch(() => {});
+    return () => request.abort();
+  }, [id]);
+
+  const formulaId = formula?.id;
+  useEffect(() => {
+    if (!formulaId) return;
+    function recordVisibleView() {
+      if (document.visibilityState !== "visible") return;
+      document.removeEventListener("visibilitychange", recordVisibleView);
+      recordFormulaView(formulaId).then(() => fetchFormulaDetail(formulaId, request.signal))
+        .then(setFormula).catch(() => {});
+    }
+    const request = new AbortController();
+    document.addEventListener("visibilitychange", recordVisibleView);
+    recordVisibleView();
+    return () => {
+      request.abort();
+      document.removeEventListener("visibilitychange", recordVisibleView);
+    };
+  }, [formulaId]);
+
+  if (!formula) return <p className="p-8" role={error ? "alert" : undefined}>{error || "Loading formula…"}</p>;
 
   const handleChange = (key, value) => {
     setInputValues((prev) => ({ ...prev, [key]: value }));
@@ -93,6 +125,12 @@ export default function FormulaCard() {
           {formula.variable ? 'Variadic' : 'Fixed'}
         </span>
       </div>
+
+      <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
+        {author && <Link className="text-blue-700 underline" to={`/authors/${author.id}`}>{author.name}</Link>}
+        <span>{formula.viewCount || 0} views</span>
+      </div>
+      {!author?.own && <ReportForm target="formula" id={formula.id} />}
 
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Equation:</p>
       <div className="bg-gray-50 dark:bg-gray-800 p-2 rounded text-xxs text-gray-800 dark:text-gray-200 mb-3">

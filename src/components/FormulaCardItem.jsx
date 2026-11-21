@@ -63,7 +63,10 @@ export default function FormulaCardItem({ formula, rank }) {
         <Metric label="Comments" value={formula.commentCount || 0} />
       </div>
 
-      <div className="mt-auto flex justify-end pt-7">
+      <div className="mt-auto flex flex-wrap items-center justify-end gap-3 pt-7">
+        {formula.authorId && (
+          <Link to={`/authors/${formula.authorId}`} className="mr-auto text-sm text-blue-700 underline">Author profile</Link>
+        )}
         <Link
           to={`/formula/${formula.id}`}
           className="rounded-xl bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
