@@ -11,6 +11,10 @@ import AdminRoute from "../auth/AdminRoute";
 import FormulaModeration from "../Pages/FormulaModeration";
 import FormulaVersionHistory from "../Pages/FormulaVersionHistory";
 import MyFormulaList from "../Pages/MyFormulaList";
+import PublicAuthor from "../Pages/PublicAuthor";
+import Notifications from "../Pages/Notifications";
+import CommunityReports from "../Pages/CommunityReports";
+import CommunityPolicy from "../Pages/CommunityPolicy";
 import MostRatedFormulas from "../Pages/MostRatedFormulas";
 
 import { NotFound } from "../Pages/NotFound";
@@ -28,6 +32,9 @@ export const AppRouter = () => {
         {/* Recomendado: rota para finalizar login e salvar token */}
         <Route path="/auth/callback" element={<AuthCallback />} />
 
+        <Route path="/authors/:id" element={<PublicAuthor />} />
+        <Route path="/community-policy" element={<CommunityPolicy />} />
+
         {/* Protegidas */}
         <Route
           element={
@@ -39,6 +46,9 @@ export const AppRouter = () => {
           <Route index element={<MostRatedFormulas />} />
           <Route path="formulas" element={<FormulaList />} />
           <Route path="formula/:id" element={<FormulaCard />} />
+          <Route path="my-profile" element={<PublicAuthor own />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="admin/reports" element={<AdminRoute><CommunityReports /></AdminRoute>} />
           <Route path="formula/:id/versions" element={<FormulaVersionHistory />} />
           <Route path="admin/formulas" element={<AdminRoute><FormulaModeration /></AdminRoute>} />
           <Route path="admin/formulas/:id/revision" element={<AdminRoute><FormulaBuilder revision /></AdminRoute>} />

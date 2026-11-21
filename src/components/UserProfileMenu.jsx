@@ -51,7 +51,7 @@ export default function UserProfileMenu({ mobile = false }) {
   const initials = initialsFrom(user?.name, user?.email);
 
   return (
-    <div ref={containerRef} className={mobile ? "relative" : "absolute bottom-6 left-4 right-4"}>
+    <div ref={containerRef} className={mobile ? "relative" : "relative mt-auto"}>
       <button
         type="button"
         onClick={() => setIsOpen((open) => !open)}

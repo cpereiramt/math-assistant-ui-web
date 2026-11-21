@@ -31,14 +31,8 @@ export const searchFormulas = async ({
   return res.data;
 };
 
-export const fetchMostRatedFormulas = async ({ page = 0, size = 12 } = {}) => {
-  return searchFormulas({
-    page,
-    size,
-    sortBy: "averageRating",
-    direction: "DESC",
-  });
-};
+export const fetchMostRatedFormulas = async ({ page = 0, size = 12, days = 30 } = {}) =>
+  (await api.get(`${BASE_URL}/ranking`, { params: { page, size, days } })).data;
 
 export const fetchMyFormulas = async () => {
   const res = await api.get(`${BASE_URL}/mine`);

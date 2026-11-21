@@ -7,7 +7,8 @@ import {
   rateFormula,
   removeFormulaRating,
 } from "../services/api";
-import { useAuth } from "../hooks/useAuth";
+import { Link } from "react-router-dom";
+import ReportForm from "./ReportForm";
 
 function formatDate(value) {
   if (!value) return "";
@@ -27,7 +28,6 @@ function flattenComments(comments, collapsedReplies, depth = 0, result = []) {
 function CommentItem({
   comment,
   depth,
-  currentUser,
   onReply,
   onDelete,
   replyState,
@@ -44,7 +44,9 @@ function CommentItem({
       <article className="border border-slate-200 bg-white p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-medium text-slate-500">{comment.userId}</p>
+            {comment.authorId
+              ? <Link className="text-xs font-medium text-blue-700 underline" to={`/authors/${comment.authorId}`}>{comment.authorName || "Author profile"}</Link>
+              : <p className="text-xs font-medium text-slate-500">Community member</p>}
             <p className="mt-1 text-xs text-slate-400">{formatDate(comment.createdAt)}</p>
           </div>
           <button type="button" onClick={() => onReply(comment.id)} className="text-xs font-medium text-amber-700 hover:text-amber-900">
@@ -52,11 +54,11 @@ function CommentItem({
           </button>
         </div>
         <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-700">{comment.content}</p>
-        {(currentUser?.email === comment.userId || currentUser?.id === comment.userId) && (
+        {comment.own ? (
           <button type="button" onClick={() => onDelete(comment.id)} className="mt-3 text-xs text-slate-400 hover:text-rose-700">
             Delete
           </button>
-        )}
+        ) : <ReportForm target="comment" id={comment.id} />}
       </article>
       {comment.replyCount > 0 && (
         <button
@@ -79,7 +81,6 @@ function CommentItem({
 }
 
 export default function FormulaSocialPanel({ formula }) {
-  const { user } = useAuth();
   const [metrics, setMetrics] = useState(formula);
   const [comments, setComments] = useState([]);
   const [replyStates, setReplyStates] = useState({});
@@ -253,7 +254,6 @@ export default function FormulaSocialPanel({ formula }) {
                   key={comment.id}
                   comment={comment}
                   depth={depth}
-                  currentUser={user}
                   onReply={setReplyTo}
                   onDelete={handleDeleteComment}
                   replyState={replyStates[comment.id]}

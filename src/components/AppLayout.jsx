@@ -4,20 +4,23 @@ import { useAuth } from "../hooks/useAuth";
 import UserProfileMenu from "./UserProfileMenu";
 
 const standardNavItems = [
-  { to: "/", label: "Most rated" },
+  { to: "/", label: "Ranking" },
   { to: "/formulas", label: "Explore formulas" },
   { to: "/my-formulas", label: "My formulas" },
   { to: "/my-formulas/new", label: "Create formula" },
+  { to: "/my-profile", label: "My public profile" },
+  { to: "/notifications", label: "Notifications" },
+  { to: "/community-policy", label: "Community policy" },
 ];
 
 export default function AppLayout() {
   const { user } = useAuth();
   const navItems = user?.role === "ADMIN"
-    ? [...standardNavItems, { to: "/admin/formulas", label: "Moderation" }]
+    ? [...standardNavItems, { to: "/admin/formulas", label: "Moderation" }, { to: "/admin/reports", label: "Reports" }]
     : standardNavItems;
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
-      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-slate-200 bg-white px-4 py-6 md:block">
+      <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 md:flex">
         <div className="mb-8">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             Math Assistant
@@ -27,7 +30,7 @@ export default function AppLayout() {
           </h1>
         </div>
 
-        <nav className="space-y-1">
+        <nav className="space-y-1 pb-6">
           {navItems.map((item) => (
             <NavLink
               key={item.to}

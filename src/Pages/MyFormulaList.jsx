@@ -234,7 +234,7 @@ export default function MyFormulaList() {
                   <p className="font-medium">Review decision</p>
                   <p className="whitespace-pre-wrap break-words">{formula.reviewReason}</p>
                   <p className="mt-1 text-xs text-slate-600">
-                    {[formula.reviewedBy, formula.reviewedAt && new Date(formula.reviewedAt).toLocaleString()].filter(Boolean).join(" · ")}
+                    {formula.reviewedAt && new Date(formula.reviewedAt).toLocaleString()}
                   </p>
                 </div>
               )}
