@@ -54,7 +54,10 @@ export default function UserProfileMenu({ mobile = false }) {
     <div ref={containerRef} className={mobile ? "relative" : "relative mt-auto"}>
       <button
         type="button"
-        onClick={() => setIsOpen((open) => !open)}
+        onClick={() => {
+          if (!isOpen && user?.usage) reloadProfile();
+          setIsOpen(!isOpen);
+        }}
         aria-expanded={isOpen}
         aria-haspopup="menu"
         className={`flex items-center rounded-lg border border-slate-200 bg-white text-left transition hover:bg-slate-50 ${
@@ -125,6 +128,20 @@ export default function UserProfileMenu({ mobile = false }) {
                   <span className="mt-2 inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
                     {user.plan}
                   </span>
+                )}
+                {user?.usage && (
+                  <dl className="mt-3 space-y-1 text-xs text-slate-600" aria-label="Staging usage">
+                    {[
+                      ["Private formulas", user.usage.privateFormulas],
+                      ["Executions today", user.usage.dailyExecutions],
+                      ["Builder previews today", user.usage.dailyBuilderPreviews],
+                    ].map(([label, consumption]) => (
+                      <div key={label} className="flex justify-between gap-2">
+                        <dt>{label}</dt>
+                        <dd>{consumption.used} / {consumption.limit}</dd>
+                      </div>
+                    ))}
+                  </dl>
                 )}
               </>
             )}
