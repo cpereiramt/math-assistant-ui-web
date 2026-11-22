@@ -7,6 +7,7 @@ const standardNavItems = [
   { to: "/", label: "Ranking" },
   { to: "/formulas", label: "Explore formulas" },
   { to: "/my-formulas", label: "My formulas" },
+  { to: "/units", label: "Measurement units" },
   { to: "/my-formulas/new", label: "Create formula" },
   { to: "/my-profile", label: "My public profile" },
   { to: "/notifications", label: "Notifications" },

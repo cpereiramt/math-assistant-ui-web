@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { fetchFormulaAuthor, fetchFormulaDetail, recordFormulaView } from "../services/community";
 import ReportForm from "./ReportForm";
-import { executeFormula } from "../services/api";
+import FormulaRunner from "./FormulaRunner";
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
 import FormulaSocialPanel from "./FormulaSocialPanel";
@@ -13,10 +13,6 @@ export default function FormulaCard() {
 }
 
 function FormulaDetail({ id }) {
-  const [inputValues, setInputValues] = useState({});
-  const [variadicValues, setVariadicValues] = useState([""]);
-  const [result, setResult] = useState(null);
-
   const [formula, setFormula] = useState(null);
   const [author, setAuthor] = useState(null);
   const [error, setError] = useState("");
@@ -50,52 +46,6 @@ function FormulaDetail({ id }) {
   }, [formulaId]);
 
   if (!formula) return <p className="p-8" role={error ? "alert" : undefined}>{error || "Loading formula…"}</p>;
-
-  const handleChange = (key, value) => {
-    setInputValues((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleVariadicChange = (index, value) => {
-    setVariadicValues((prev) => prev.map((item, i) => (i === index ? value : item)));
-  };
-
-  const handleAddVariadicValue = () => {
-    setVariadicValues((prev) => [...prev, ""]);
-  };
-
-  const handleExecute = async () => {
-    try {
-      let payload;
-
-      if (!formula.variable) {
-        const variables = (formula.parameters || []).reduce((acc, parameter) => {
-          acc[parameter] = inputValues[parameter];
-          return acc;
-        }, {});
-
-        payload = {
-          formulaName: formula.name,
-          variables,
-        };
-      } else {
-        const values = variadicValues
-          .map((value) => Number(value))
-          .filter((value) => !Number.isNaN(value));
-
-        payload = {
-          formulaName: formula.name,
-          values,
-        };
-      }
-
-      const res = await executeFormula(payload);
-      setResult(res);
-    } catch (err) {
-      setResult(`Error when executing equation: ${err}`);
-    }
-  };
-
-  const variables = formula.parameters || [];
 
   return (
     <div className="p-4 md:p-8 max-w-2xl mx-auto">
@@ -154,78 +104,11 @@ function FormulaDetail({ id }) {
           <span className="inline-block px-2 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 rounded">
             x1, x2, ..., xn
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">Variadic - accepts any number of parameters</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">Variadic formula</span>
         </div>
       )}
 
-      <form
-        onSubmit={(e) => e.preventDefault()}
-        className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-md p-6 space-y-4"
-      >
-        {!formula.variable ? (
-          variables.map((v) => (
-            <div key={v} className="flex flex-col">
-              <label htmlFor={v} className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                {v}:
-              </label>
-              <input
-                id={v}
-                type="number"
-                placeholder={`Insert a value for ${v}`}
-                value={inputValues[v] || ""}
-                onChange={(e) => handleChange(v, e.target.value === "" ? "" : Number(e.target.value))}
-                required
-                className="px-4 py-2 border rounded-md text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          ))
-        ) : (
-          <div className="space-y-3">
-            {variadicValues.map((value, index) => (
-              <div key={`value-${index}`} className="flex flex-col">
-                <label htmlFor={`value-${index}`} className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Value {index + 1}:
-                </label>
-                <input
-                  id={`value-${index}`}
-                  type="number"
-                  placeholder={`Insert value ${index + 1}`}
-                  value={value}
-                  onChange={(e) => handleVariadicChange(index, e.target.value === "" ? "" : Number(e.target.value))}
-                  required
-                  className="px-4 py-2 border rounded-md text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            ))}
-
-            <button
-              type="button"
-              onClick={handleAddVariadicValue}
-              className="inline-flex items-center gap-2 border border-blue-300 text-blue-700 hover:bg-blue-50 px-3 py-2 rounded-md text-sm transition"
-            >
-              + Add value
-            </button>
-          </div>
-        )}
-
-        <div className="text-right">
-          <button
-            type="button"
-            onClick={handleExecute}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition"
-          >
-            Execute
-          </button>
-
-          <div className="mt-6 text-center">
-            {result !== null && (
-              <p className="text-lg font-semibold text-green-600 underline underline-offset-4">
-                Result: {typeof result === 'object' ? JSON.stringify(result) : result}
-              </p>
-            )}
-          </div>
-        </div>
-      </form>
+      <FormulaRunner key={formula.version ?? formula.id} formula={formula} />
       <Link to={`/formula/${formula.id}/versions`} className="mt-4 inline-block text-sm font-medium text-blue-700 hover:underline">
         Version history
       </Link>

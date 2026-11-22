@@ -22,6 +22,7 @@ export default function SourceVersionPicker({ node, onChange }) {
     onChange({
       sourceVersion: version.version,
       sourceName: version.name,
+      inputUnits: version.inputUnits || {},
       bindings: Object.fromEntries((version.parameters || []).map((parameter) => [
         parameter,
         existingBindings.find(([name]) => name.toUpperCase() === parameter.toUpperCase())?.[1] ?? null,

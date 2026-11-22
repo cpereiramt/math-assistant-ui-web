@@ -21,6 +21,7 @@ function createNode(item) {
       sourceFormulaId: item.formula.id,
       sourceName: item.formula.name,
       sourceVersion: item.formula.version ?? 1,
+      inputUnits: item.formula.inputUnits || {},
       bindings: Object.fromEntries(
         (item.formula.parameters || []).map((parameter) => [parameter, null]),
       ),
@@ -179,7 +180,7 @@ function ExpressionNode({ node, onChange, onRemove, onSelect, selectedId }) {
           {Object.entries(node.bindings || {}).map(([parameter, child]) => (
             <div key={parameter}>
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                {parameter}
+                {parameter}{node.inputUnits?.[parameter] && ` · ${node.inputUnits[parameter]}`}
               </p>
               {child ? (
                 <ExpressionNode
