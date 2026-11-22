@@ -2,10 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "katex/dist/katex.min.css";
 import { BlockMath } from "react-katex";
+import FormulaRunner from "../components/FormulaRunner";
 import {
   deleteMyFormula,
-  executeMyFormula,
-  executeFormula,
   fetchMyFormulas,
   publishMyFormula,
 } from "../services/api";
@@ -17,76 +16,6 @@ const statusLabels = {
   REJECTED: "Rejected",
   DEPRECATED: "Deprecated",
 };
-
-function FormulaRunner({ formula }) {
-  const [inputValues, setInputValues] = useState({});
-  const [result, setResult] = useState(null);
-
-  const handleExecute = async () => {
-    const missingParameter = (formula.parameters || []).find(
-      (parameter) => inputValues[parameter] === undefined || inputValues[parameter] === "",
-    );
-
-    if (missingParameter) {
-      setResult(`Fill ${missingParameter} before executing.`);
-      return;
-    }
-
-    const variables = (formula.parameters || []).reduce((acc, parameter) => {
-      acc[parameter] = Number(inputValues[parameter]);
-      return acc;
-    }, {});
-
-    try {
-      const execute = formula.status === "PUBLIC" ? executeFormula : executeMyFormula;
-      const response = await execute({
-        formulaName: formula.name,
-        variables,
-      });
-      setResult(response);
-    } catch (error) {
-      setResult(`Error: ${error.message}`);
-    }
-  };
-
-  return (
-    <div className="mt-4 border-t border-slate-200 pt-4">
-      <div className="grid gap-3 sm:grid-cols-2">
-        {(formula.parameters || []).map((parameter) => (
-          <label key={parameter} className="text-sm font-medium text-slate-700">
-            {parameter}
-            <input
-              type="number"
-              value={inputValues[parameter] || ""}
-              onChange={(event) =>
-                setInputValues((current) => ({
-                  ...current,
-                  [parameter]: event.target.value,
-                }))
-              }
-              className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-        ))}
-      </div>
-
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={handleExecute}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          Execute
-        </button>
-        {result !== null && (
-          <p className="text-sm font-semibold text-emerald-700">
-            Result: {typeof result === "object" ? JSON.stringify(result) : result}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default function MyFormulaList() {
   const [formulas, setFormulas] = useState([]);
@@ -258,7 +187,7 @@ export default function MyFormulaList() {
                 ))}
               </div>
 
-              {!formula.variable && ["PRIVATE", "PUBLIC"].includes(formula.status) && <FormulaRunner formula={formula} />}
+              {["PRIVATE", "PUBLIC"].includes(formula.status) && <FormulaRunner formula={formula} mine={formula.status !== "PUBLIC"} />}
             </article>
           ))}
         </div>

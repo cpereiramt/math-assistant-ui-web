@@ -163,3 +163,21 @@ export const reviseFormula = async (id, body) => {
   const res = await api.put(`${BASE_URL}/admin/${encodeURIComponent(id)}/revision`, body);
   return res.data;
 };
+
+export const fetchUnits = async (admin = false) =>
+  (await api.get(`${BASE_URL}/${admin ? "admin/" : ""}units`)).data;
+
+export const saveUnit = async (code, unit) =>
+  (await api.put(`${BASE_URL}/admin/units/${encodeURIComponent(code)}`, unit)).data;
+
+export const calculateFormula = async (inputs, mine = false) =>
+  (await api.post(`${BASE_URL}/${mine ? "mine/" : ""}calculate`, inputs)).data;
+
+export const calculatePreview = async (formula, inputs, formulaId, revision) =>
+  (await api.post(
+    revision ? `${BASE_URL}/admin/${formulaId}/calculate-preview` : `${BASE_URL}/builder/calculate`,
+    { formula, inputs }, { params: revision ? undefined : { formulaId } },
+  )).data;
+
+export const validateFormulaRevision = async (formulaId, formula) =>
+  (await api.post(`${BASE_URL}/admin/${formulaId}/validate-revision`, formula)).data;

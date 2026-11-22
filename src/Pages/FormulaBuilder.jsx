@@ -1,8 +1,11 @@
+import { useUnits } from "../hooks/useUnits";
+import { calculationLabel, calculationMessage } from "../utils/calculation";
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { BlockMath } from "react-katex";
 import "katex/dist/katex.min.css";
 import { useFormula } from "../hooks/useFormulas";
+import { CalculationInput, UnitSelect } from "../components/CalculationFields";
 import VisualFormulaBuilder from "../components/VisualFormulaBuilder";
 import {
   createMyFormula,
@@ -10,21 +13,28 @@ import {
   fetchMyFormula,
   fetchFormulaVersions,
   reviseFormula,
-  previewBuilderFormula,
+  calculatePreview,
   updateMyFormula,
   validateMyFormula,
+  validateFormulaRevision,
 } from "../services/api";
 
 const formulaGroups = ["ARITHMETIC", "TRIGONOMETRY", "ALGEBRA", "PERCENTAGE", "GEOMETRY", "FINANCIAL", "PHYSICS", "STATISTICS"];
-const reservedTokens = new Set(["ABS", "AVG", "COS", "EXP", "LOG", "MAX", "MIN", "POW", "SIN", "SQRT", "SUM", "TAN"]);
+const reservedTokens = new Set(["ABS", "AVERAGE", "ROUND", "FX", "AVG", "COS", "EXP", "LOG", "MAX", "MIN", "POW", "SIN", "SQRT", "SUM", "TAN"]);
 
 function parseParameters(text) {
   return text.split(",").map((value) => value.trim().toUpperCase()).filter(Boolean);
 }
 
 function detectParameters(equation) {
-  const matches = equation.toUpperCase().match(/\b[A-Z][A-Z0-9_]*\b/g) || [];
+  const matches = equation.replace(/"[^"]*"/g, "").toUpperCase().match(/\b[A-Z][A-Z0-9_]*\b/g) || [];
   return [...new Set(matches)].filter((token) => !reservedTokens.has(token));
+}
+
+function treeParameters(node) {
+  if (!node) return [];
+  if (node.type === "VARIABLE") return [(node.variableName || "").trim().toUpperCase()];
+  return [...new Set([...(node.children || []), ...Object.values(node.bindings || {})].flatMap(treeParameters))];
 }
 
 function serializeTree(node) {
@@ -58,6 +68,8 @@ function hydrateTree(node, snapshots) {
   return {
     ...node,
     sourceName: snapshot?.name ?? node.sourceName,
+    inputUnits: Object.fromEntries(Object.entries(snapshot?.unitSnapshots || {})
+      .filter(([field]) => field !== "_result").map(([field, unit]) => [field, unit.code])),
     sourceVersion: node.sourceVersion ?? (snapshot ? 0 : undefined),
     bindings: Object.fromEntries(
       Object.entries(node.bindings || {}).map(([parameter, child]) => [parameter, hydrateTree(child, snapshots)]),
@@ -80,6 +92,7 @@ function FormulaEditor({ id, revision }) {
   const [compiled, setCompiled] = useState(null);
   const [testValues, setTestValues] = useState({});
   const [testResult, setTestResult] = useState(null);
+  const [testCount, setTestCount] = useState(1);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info");
   const [isLoading, setIsLoading] = useState(isEditing);
@@ -88,8 +101,20 @@ function FormulaEditor({ id, revision }) {
   const [expectedVersion, setExpectedVersion] = useState(null);
   const [reason, setReason] = useState("");
   const [variadic, setVariadic] = useState(null);
-  const backPath = revision ? `/formula/${id}/versions` : "/my-formulas";
+  const { units, unitsError } = useUnits();
+  const [inputUnits, setInputUnits] = useState({});
+  const [outputUnit, setOutputUnit] = useState("");
+  const [pinnedUnits, setPinnedUnits] = useState({});
   const parameters = useMemo(() => parseParameters(parametersText), [parametersText]);
+  const previewFields = variadic ? Array.from({ length: testCount }, (_, index) => `X${index + 1}`)
+    : compiled?.parameters || [];
+  const unitFields = variadic ? ["ITEM"] : mode === "TEXT" ? parameters : treeParameters(tree);
+  const optionFor = (field, code) => pinnedUnits[field]?.code === code ? pinnedUnits[field] : units.find((unit) => unit.code === code);
+  const optionsFor = (field, code) => {
+    const pinned = optionFor(field, code);
+    return pinned ? [pinned, ...units.filter((unit) => unit.code !== pinned.code)] : units;
+  };
+  const backPath = revision ? `/formula/${id}/versions` : "/my-formulas";
 
   const showMessage = (text, type = "info") => {
     setMessage(text);
@@ -115,6 +140,9 @@ function FormulaEditor({ id, revision }) {
         setCatalog((available || []).filter((formula) => !formula.variable));
         if (existing) {
           setExpectedVersion(existing.version);
+          setInputUnits(existing.inputUnits || {});
+          setOutputUnit(existing.outputUnit || "");
+          setPinnedUnits(existing.unitSnapshots || {});
           if (revision && existing.variable) {
             setVariadic({ min: existing.minParameters ?? "", max: existing.maxParameters ?? "" });
           }
@@ -142,14 +170,19 @@ function FormulaEditor({ id, revision }) {
   }, [id, isEditing, revision]);
 
   const buildPayload = () => {
+    const measurement = {
+      inputUnits: Object.fromEntries(unitFields.filter((field) => inputUnits[field])
+        .map((field) => [field, inputUnits[field]])),
+      outputUnit: outputUnit || null,
+    };
     if (variadic) {
       return {
-        name, group, description, equation, displayEquation: equation, variable: true, inputMode: "TEXT",
+        ...measurement, name, group, description, equation, displayEquation: equation, variable: true, inputMode: "TEXT",
         minParameters: variadic.min === "" ? null : Number(variadic.min),
         maxParameters: variadic.max === "" ? null : Number(variadic.max),
       };
     }
-    const common = { name, group, description, variable: false, inputMode: mode };
+    const common = { ...measurement, name, group, description, variable: false, inputMode: mode };
     return mode === "TEXT"
       ? { ...common, equation, displayEquation: equation, parameters }
       : { ...common, expressionTree: serializeTree(tree) };
@@ -164,13 +197,13 @@ function FormulaEditor({ id, revision }) {
 
   const handleValidate = async () => {
     try {
-      const response = await validateMyFormula(buildPayload(), id);
+      const payload = buildPayload();
+      const response = revision ? await validateFormulaRevision(id, payload) : await validateMyFormula(payload, id);
       showMessage(response.message, response.valid ? "success" : "error");
       if (response.valid) {
         setCompiled(response);
-        setTestValues((current) => (response.parameters || []).reduce(
-          (values, parameter) => ({ ...values, [parameter]: current[parameter] ?? "" }), {},
-        ));
+        setTestCount(Math.min(100, Math.max(1, Number(variadic?.min) || 1)));
+        setTestResult(null);
       } else setCompiled(null);
     } catch (error) {
       showMessage(`Validation error: ${error.message}`, "error");
@@ -178,28 +211,27 @@ function FormulaEditor({ id, revision }) {
   };
 
   const handlePreview = async () => {
-    const previewParameters = compiled?.parameters || [];
-    const missing = previewParameters.find((parameter) => testValues[parameter] === "" || testValues[parameter] === undefined);
+    const missing = previewFields.find((parameter) => !testValues[parameter]?.value);
     if (missing) {
       showMessage(`Fill ${missing} before testing.`, "error");
       return;
     }
     try {
-      const variables = Object.fromEntries(previewParameters.map((parameter) => [parameter, Number(testValues[parameter])]));
-      const response = await previewBuilderFormula(buildPayload(), variables, id);
-      if (!response.valid) {
-        showMessage(response.message, "error");
-        return;
-      }
-      setTestResult(response.result);
+      const inputs = variadic ? { values: previewFields.map((field) => testValues[field]) }
+        : { variables: Object.fromEntries(previewFields.map((field) => [field, testValues[field]])) };
+      const response = await calculatePreview(buildPayload(), inputs, id, revision);
+      setTestResult(calculationLabel(response));
       showMessage("Formula executed successfully.", "success");
     } catch (error) {
-      showMessage(`Preview error: ${error.message}`, "error");
+      setTestResult(null);
+      showMessage(calculationMessage(error), "error");
     }
   };
 
   const handleSave = async (event) => {
     event.preventDefault();
+    const removed = Object.keys(inputUnits).filter((field) => inputUnits[field] && !unitFields.includes(field));
+    if (removed.length && !window.confirm(`Remove unit settings for ${removed.join(", ")}?`)) return;
     setIsSaving(true);
     setMessage("");
     try {
@@ -277,7 +309,7 @@ function FormulaEditor({ id, revision }) {
         {mode === "TEXT" ? (
           <div className="mt-6">
             <label className="block text-sm font-medium text-slate-700">Equation
-              <textarea value={equation} onChange={(event) => setEquation(event.target.value)} rows={4} placeholder="PRICE - (PRICE * DISCOUNT / 100)" required className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+              <textarea value={equation} onChange={(event) => { setEquation(event.target.value); setCompiled(null); }} rows={4} placeholder="PRICE - (PRICE * DISCOUNT / 100)" required className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
             </label>
             {variadic ? (
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -285,40 +317,65 @@ function FormulaEditor({ id, revision }) {
                   <label key={key} className="text-sm font-medium text-slate-700">
                     {label}
                     <input type="number" min="1" value={variadic[key]}
-                      onChange={(event) => setVariadic((current) => ({ ...current, [key]: event.target.value }))}
+                      onChange={(event) => { setVariadic((current) => ({ ...current, [key]: event.target.value })); setCompiled(null); }}
                       className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" />
                   </label>
                 ))}
               </div>
             ) : <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end">
               <label className="flex-1 text-sm font-medium text-slate-700">Parameters
-                <input value={parametersText} onChange={(event) => setParametersText(event.target.value)} placeholder="PRICE, DISCOUNT" required className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
+                <input value={parametersText} onChange={(event) => { setParametersText(event.target.value); setCompiled(null); }} placeholder="PRICE, DISCOUNT" required className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
               </label>
-              <button type="button" onClick={() => setParametersText(detectParameters(equation).join(", "))} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Detect</button>
+              <button type="button" onClick={() => { setParametersText(detectParameters(equation).join(", ")); setCompiled(null); }} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Detect</button>
             </div>}
           </div>
         ) : (
           <VisualFormulaBuilder catalog={catalog} tree={tree} onTreeChange={(nextTree) => { setTree(nextTree); setCompiled(null); setTestResult(null); }} />
         )}
 
+        <fieldset className="mt-6 rounded-lg border border-slate-200 p-4">
+          <legend className="px-2 font-semibold">Measurement units</legend>
+          <Link to="/units" className="text-sm text-blue-700 underline">Browse measurement catalog</Link>
+          {unitsError && <p role="alert" className="mt-2 text-sm text-red-700">{unitsError}</p>}
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {[...new Set(unitFields)].filter(Boolean).map((field) => <UnitSelect
+              key={field} label={field === "ITEM" && variadic ? "Each value" : field}
+              units={optionsFor(field, inputUnits[field])} value={inputUnits[field] || ""} unitless
+              onChange={(code) => {
+                setInputUnits((current) => ({ ...current, [field]: code }));
+                setTestValues((current) => variadic
+                  ? Object.fromEntries(Object.entries(current).map(([key, input]) => [key, { value: input.value }]))
+                  : { ...current, [field]: { value: current[field]?.value ?? "" } });
+                setCompiled(null);
+                setTestResult(null);
+              }} />)}
+            <UnitSelect label="Result unit" units={optionsFor("_result", outputUnit)} value={outputUnit} unitless
+              onChange={(code) => { setOutputUnit(code); setCompiled(null); setTestResult(null); }} />
+          </div>
+        </fieldset>
+
         {compiled && (
           <section className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50/50 p-4">
             <h2 className="text-sm font-semibold text-emerald-900">Validated preview</h2>
             <div className="mt-3 overflow-x-auto rounded-md bg-white p-3"><BlockMath math={compiled.displayEquation || compiled.equation} /></div>
             <div className="mt-3 flex flex-wrap gap-2">{(compiled.parameters || []).map((parameter) => <span key={parameter} className="rounded bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">{parameter}</span>)}</div>
-            {mode === "BUILDER" && (
-              <div className="mt-4">
-                <div className="grid gap-3 sm:grid-cols-3">{(compiled.parameters || []).map((parameter) => (
-                  <label key={parameter} className="text-sm font-medium text-slate-700">{parameter}
-                    <input type="number" step="any" value={testValues[parameter] ?? ""} onChange={(event) => setTestValues((current) => ({ ...current, [parameter]: event.target.value }))} className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" />
-                  </label>
+            <div className="mt-4">
+                <div className="grid gap-3 sm:grid-cols-3">{previewFields.map((parameter) => (
+                  <CalculationInput key={parameter} field={parameter} expected={optionFor(variadic ? "ITEM" : parameter, inputUnits[variadic ? "ITEM" : parameter])}
+                    units={units} input={testValues[parameter]}
+                    onChange={(input) => setTestValues((current) => ({ ...current, [parameter]: input }))} />
                 ))}</div>
-                <div className="mt-3 flex items-center gap-4">
+                <div className="mt-3 flex flex-wrap items-center gap-4">
+                  {variadic && <>
+                    <button type="button" disabled={testCount >= Math.min(100, Number(variadic.max) || 100)}
+                      onClick={() => setTestCount(testCount + 1)} className="rounded border px-3 py-2 disabled:opacity-50">Add value</button>
+                    <button type="button" disabled={testCount <= (Number(variadic.min) || 1)}
+                      onClick={() => setTestCount(testCount - 1)} className="rounded border px-3 py-2 disabled:opacity-50">Remove last value</button>
+                  </>}
                   <button type="button" onClick={handlePreview} className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">Test values</button>
                   {testResult !== null && <span className="text-sm font-semibold text-emerald-800">Result: {testResult}</span>}
                 </div>
-              </div>
-            )}
+            </div>
           </section>
         )}
 
@@ -329,7 +386,7 @@ function FormulaEditor({ id, revision }) {
         </label>}
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
-          {!revision && <button type="button" onClick={handleValidate} className="rounded-md border border-blue-200 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50">Validate</button>}
+          <button type="button" onClick={handleValidate} className="rounded-md border border-blue-200 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50">Validate</button>
           <button type="submit" disabled={isSaving || (mode === "BUILDER" && !tree)} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300">{isSaving ? "Saving..." : revision ? "Publish revision" : "Save formula"}</button>
         </div>
       </form>}

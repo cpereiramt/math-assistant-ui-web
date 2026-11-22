@@ -6,6 +6,7 @@ import { FormulaList } from "../Pages/FormulaList";
 import FormulaCard from "../components/FormulaCard";
 import LoginWithGoogle from "../Pages/LoginWithGoogle";
 import AppLayout from "../components/AppLayout";
+import MeasurementUnits from "../Pages/MeasurementUnits";
 import FormulaBuilder from "../Pages/FormulaBuilder";
 import AdminRoute from "../auth/AdminRoute";
 import FormulaModeration from "../Pages/FormulaModeration";
@@ -44,6 +45,7 @@ export const AppRouter = () => {
           }
         >
           <Route index element={<MostRatedFormulas />} />
+          <Route path="units" element={<MeasurementUnits />} />
           <Route path="formulas" element={<FormulaList />} />
           <Route path="formula/:id" element={<FormulaCard />} />
           <Route path="my-profile" element={<PublicAuthor own />} />
